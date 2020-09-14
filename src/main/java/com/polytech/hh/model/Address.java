@@ -6,15 +6,24 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.Document;
 
-@Document(indexName = "customeridx", indexStoreType = "customer")
+@Document(indexName = "addressidx", indexStoreType = "address")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Customer {
+public class Address {
 
     @Id
     private Long id;
-    private String firstName;
-    private String lastName;
-    private String age;
+
+    private String city;
+
+    private String street;
+
+    private String building;
+
+    private Double lat;
+
+    private Double lng;
+
+    private Metro metro;
 }
