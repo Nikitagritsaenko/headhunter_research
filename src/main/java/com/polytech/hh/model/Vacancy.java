@@ -1,16 +1,10 @@
 package com.polytech.hh.model;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.Document;
-import org.springframework.format.annotation.DateTimeFormat;
-
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.Date;
 
 @Document(indexName = "vacancyidx", indexStoreType = "vacancy")
 @Data
@@ -23,7 +17,11 @@ public class Vacancy {
 
     private String name;
 
+    private String language;
+
     private Area area;
+
+    private String location;
 
     private Salary salary;
 
@@ -35,7 +33,17 @@ public class Vacancy {
 
     private String created_at;
 
+    private String alternate_url;
+
     private Snippet snippet;
 
     private Schedule schedule;
+
+    private String level;
+
+    private String english;
+
+    private String framework;
+
+    private String role;
 }
