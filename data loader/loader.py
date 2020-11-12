@@ -1,9 +1,10 @@
 import requests
 import json
 from datetime import date, timedelta
+from corrector import preprocess
 
 vacancies_url = "https://api.hh.ru/vacancies"
-add_vacancies_url = "http://localhost:8080/saveVacancy"
+add_vacancies_url = "http://localhost:8080/saveVacancies"
 vacancies_out_dir = "out/"
 days_limit = 30
 page_limit = 20
@@ -33,7 +34,7 @@ if __name__ == '__main__':
 
             print(str(i) + " " + str(page))
             body = json.loads(response.text)
-
+            body['items'] = preprocess(body['items'])
             response = requests.post(add_vacancies_url, json=body['items'])
             print(response.text)
 
