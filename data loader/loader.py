@@ -12,7 +12,7 @@ page_limit = 20
 if __name__ == '__main__':
 
     today = date.today()
-    today_minus_month = today - timedelta(days=30)
+    today_minus_month = today - timedelta(days=days_limit)
 
     request_params = {'specialization': '1.221',
                       'per_page': '100',

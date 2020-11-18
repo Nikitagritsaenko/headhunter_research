@@ -1,13 +1,12 @@
 import requests
 import json
-from fetcher import fetch_all_ids
+from fetcher import fetch_all_ids, fetch_by_id
 
-get_all_vacancies_url_c_eng = "http://localhost:8080/vacancy/C"
-get_all_vacancies_url_c_rus = "http://localhost:8080/vacancy/С"
-get_all_vacancies_url_1c_eng = "http://localhost:8080/vacancy/1C"
+get_full_vacancy_by_id_url = "https://api.hh.ru/vacancies/"
 add_vacancies_url = "http://localhost:8080/saveVacancies"
-add_vacancy_url = "http://localhost:8080/saveOneVacancy"
 get_url = "http://localhost:9200/vacancyidx/_search"
+
+ids = list(set(fetch_all_ids()))
 
 replacements = {
     "С++": "C++",
@@ -87,10 +86,51 @@ def preprocess_by_field(body, values, param):
                     if v.lower() in snippet['requirement'].lower():
                         entry[param] = v
                         break
+
+        if param not in entry:
+            if 'description' in entry:
+                for v in values:
+                    if v.lower() in entry['description'].lower():
+                        entry[param] = v
+                        break
     return
 
 
 def preprocess(body):
+    N = len(body)
+    i = 0
+    for item in body:
+        if '_source' not in item:
+            entry = item
+        else:
+            entry = item['_source']
+
+        if 'description' in entry:
+            continue
+
+        entry_id = entry['id']
+
+        if entry_id in ids:
+            fetched = fetch_by_id(entry_id)
+            fetched = fetched['_source']
+            if 'description' in fetched:
+                entry['description'] = fetched['description']
+            if 'experience' in fetched:
+                entry['experience'] = fetched['experience']
+        else:
+            query = get_full_vacancy_by_id_url + str(entry['id'])
+            response = requests.get(query)
+            vacancy = json.loads(response.text)
+            if 'description' in vacancy:
+                full_description = vacancy['description']
+                entry['description'] = full_description
+            if 'experience' in vacancy:
+                experience = vacancy['experience']
+                entry['experience'] = experience
+
+            print(str(i) + "/" + str(N))
+        i = i + 1
+
     for item in body:
         if '_source' not in item:
             entry = item
@@ -132,18 +172,17 @@ def preprocess(body):
 
 
 def correct_all_entries():
-    ids = list(set(fetch_all_ids()))
     total = len(ids)
 
     chunks_processed = 0
     while total > 0:
         str_id = "["
-        if total >= 10000:
-            chunks_size = 10000
+        if total >= 1000:
+            chunks_size = 1000
         else:
             chunks_size = total
 
-        start_idx = 10000 * chunks_processed
+        start_idx = 1000 * chunks_processed
         end_idx = start_idx + chunks_size
 
         for i in range(start_idx, end_idx):
