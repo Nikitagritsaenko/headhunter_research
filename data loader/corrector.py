@@ -1,6 +1,10 @@
 import requests
 import json
-from fetcher import fetch_all_ids, fetch_by_id
+import threading
+from fetcher import fetch_all_ids
+import time
+from concurrent.futures import ThreadPoolExecutor as PoolExecutor
+from random import randint
 
 get_full_vacancy_by_id_url = "https://api.hh.ru/vacancies/"
 add_vacancies_url = "http://localhost:8080/saveVacancies"
@@ -54,9 +58,11 @@ headers = {
     'Content-Type': 'application/json',
 }
 
+threshold = 500
+
 params = (
     ('pretty', ''),
-    ('size', 10000)
+    ('size', threshold)
 )
 
 
@@ -88,7 +94,7 @@ def preprocess_by_field(body, values, param):
                         break
 
         if param not in entry:
-            if 'description' in entry:
+            if 'description' in entry and entry['description'] is not None:
                 for v in values:
                     if v.lower() in entry['description'].lower():
                         entry[param] = v
@@ -108,27 +114,37 @@ def preprocess(body):
         if 'description' in entry:
             continue
 
-        entry_id = entry['id']
+        # entry_id = entry['id']
 
-        if entry_id in ids:
-            fetched = fetch_by_id(entry_id)
-            fetched = fetched['_source']
-            if 'description' in fetched:
-                entry['description'] = fetched['description']
-            if 'experience' in fetched:
-                entry['experience'] = fetched['experience']
-        else:
-            query = get_full_vacancy_by_id_url + str(entry['id'])
-            response = requests.get(query)
-            vacancy = json.loads(response.text)
-            if 'description' in vacancy:
-                full_description = vacancy['description']
-                entry['description'] = full_description
-            if 'experience' in vacancy:
-                experience = vacancy['experience']
-                entry['experience'] = experience
+        # if entry_id in ids:
+        #    fetched = fetch_by_id(entry_id)
+        #    fetched = fetched['_source']
+        #    if 'description' in fetched:
+        #        entry['description'] = fetched['description']
+        #    if 'experience' in fetched:
+        #        entry['experience'] = fetched['experience']
+        # else:
+        query = get_full_vacancy_by_id_url + str(entry['id'])
+        response = None
+        while response == None:
+            try:
+                response = requests.get(query)
+            except:
+                print("Connection refused by the server..")
+                print("Zzzzzz...")
+                time.sleep(5)
+                print("Trying to continue...")
+                continue
 
-            print(str(i) + "/" + str(N))
+        vacancy = json.loads(response.text)
+        if 'description' in vacancy:
+            full_description = vacancy['description']
+            entry['description'] = full_description
+        if 'experience' in vacancy:
+            experience = vacancy['experience']
+            entry['experience'] = experience
+
+        print(str(threading.current_thread().ident) + " " + str(i) + "/" + str(N) + " code " + str(response.status_code))
         i = i + 1
 
     for item in body:
@@ -171,18 +187,21 @@ def preprocess(body):
     return body
 
 
-def correct_all_entries():
-    total = len(ids)
+def correct_all_entries(S, E):
+    total = E - S
+    if len(ids) - E < total:
+        total = len(ids) - E
 
     chunks_processed = 0
+
     while total > 0:
         str_id = "["
-        if total >= 1000:
-            chunks_size = 1000
+        if total >= threshold:
+            chunks_size = threshold
         else:
             chunks_size = total
 
-        start_idx = 1000 * chunks_processed
+        start_idx = S + threshold * chunks_processed
         end_idx = start_idx + chunks_size
 
         for i in range(start_idx, end_idx):
@@ -193,7 +212,11 @@ def correct_all_entries():
 
         response = requests.post(get_url, headers=headers, params=params, data=data)
         body = json.loads(response.text)
-        body = body['hits']['hits']
+        if 'hits' in body:
+            body = body['hits']
+        if 'hits' in body:
+            body = body['hits']
+
         body = preprocess(body)
 
         entries = []
@@ -202,11 +225,26 @@ def correct_all_entries():
             entries.append(entry)
 
         r = requests.post(add_vacancies_url, json=entries)
-        print(total)
+        print(str(threading.current_thread().ident) + " " + str(start_idx) + " " + str(end_idx) + " code " + str(r.status_code))
+
+        time.sleep(randint(1, 5))
 
         total = total - chunks_size
         chunks_processed = chunks_processed + 1
 
 
 if __name__ == '__main__':
-    correct_all_entries()
+
+    ss = []
+    ee = []
+    chunk_size = 1000
+    N = int(len(ids) / chunk_size) + 1
+    for i in range(0, N):
+        s = i * chunk_size
+        e = s + chunk_size
+        ss.append(s)
+        ee.append(e)
+
+    with PoolExecutor(max_workers=100) as executor:
+        for _ in executor.map(correct_all_entries, ss, ee):
+            pass
