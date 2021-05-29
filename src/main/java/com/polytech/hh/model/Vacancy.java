@@ -1,5 +1,6 @@
 package com.polytech.hh.model;
 
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -46,4 +47,10 @@ public class Vacancy {
     private String framework;
 
     private String role;
+
+    private String description;
+
+    private Experience experience;
+
+    private List<Specialization> specializations;
 }
