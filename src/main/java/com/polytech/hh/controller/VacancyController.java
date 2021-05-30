@@ -1,7 +1,10 @@
 package com.polytech.hh.controller;
 
+import com.polytech.hh.dto.SearchVacancyDto;
+import com.polytech.hh.dto.VacancyDto;
 import com.polytech.hh.model.Vacancy;
 import com.polytech.hh.repository.VacancyRepository;
+import com.polytech.hh.service.VacancyService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -15,9 +18,11 @@ import java.util.List;
 public class VacancyController {
 
     private final VacancyRepository repository;
+    private final VacancyService service;
 
-    public VacancyController(VacancyRepository repository) {
+    public VacancyController(VacancyRepository repository, VacancyService service) {
         this.repository = repository;
+        this.service = service;
     }
 
     @PostMapping("/saveVacancies")
@@ -49,5 +54,10 @@ public class VacancyController {
     @GetMapping("/vacancy/name/{name}")
     public @ResponseBody List<Vacancy> findByName(@PathVariable String name) {
         return repository.findByName(name);
+    }
+
+    @PutMapping("/vacancies/{limit}")
+    public @ResponseBody List<VacancyDto> searchVacancy(@RequestBody SearchVacancyDto dto, @PathVariable int limit) {
+        return service.searchVacancy(dto, limit);
     }
 }
