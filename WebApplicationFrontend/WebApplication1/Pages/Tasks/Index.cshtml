@@ -1,0 +1,41 @@
+﻿@page
+@model TasksModel
+@{
+}
+<div class="buttons">
+	<div class="text-center">
+		<div class="float-left">
+			<a class="btn btn-primary" asp-page-handler="Update">Update DB</a>
+		</div>
+	</div>
+</div>
+
+<div class="mycontainer">
+	<div class="row">
+		<div id="scrollable" class="col-3 overflow-auto align-content-around" style="height: 600px; position: relative">
+			@foreach (var frame in Model.frames)
+			{
+				<div class="row" id=@frame.Key>
+					<div class="col-12">
+						<div>
+							<form asp-page-handler="OpenTask" method="post">
+								<button class="btn btn-default border text-center" style="width:100%">@frame.Value.Key</button>
+								<input type="hidden" name="key" value=@frame.Key />
+							</form>
+						</div>
+					</div>
+				</div>
+			}
+		</div>
+		<div class="col-8">
+			<iframe src=@Model.openedFrame height="600" width="100%"></iframe>
+		</div>
+	</div>
+</div>
+
+<script type="text/javascript">
+    var myElement = document.getElementById("@Model.openedFrameKey");
+    myElement.firstElementChild.firstElementChild.style.backgroundColor = "lightblue";
+    var topPos = myElement.offsetTop;
+    document.getElementById('scrollable').scrollTop = topPos;
+</script>

@@ -1,0 +1,52 @@
+﻿@page
+@model SearchModel
+@{
+	<h1>SEARCH</h1>
+
+	// combobox searchable: vacancy type, city, metro (if exist?)
+	<select name="Cities" asp-items="Model.Cities"></select>
+	<select name="VacancyType" asp-items="Model.VacancyTypes"></select>
+	<select name="Metro" asp-items="Model.Metro"></select>
+
+	// table with vacancies
+	<form method="post" role="form" class="form-horizontal">
+		<table class="table table-sm table-striped table-bordered">
+			<thead>
+				<tr>
+					<td>Name</td>
+					<td>Salary</td>
+					<td>Experience</td>
+					<td>Schedule</td>
+					<td>Vacancy on hh.ru</td>
+				</tr>
+			</thead>
+			@foreach (var vacancy in Model.Vacancies)
+			{
+				<tr>
+					<td>
+						@vacancy.Name
+					</td>
+					<td>
+						@vacancy.Salary
+					</td>
+					<td>
+						@vacancy.Experience
+					</td>
+					<td>
+						@vacancy.Schedule
+					</td>
+					<td>
+						<a href="@vacancy.Link" class="btn btn-primary">Open full description</a>
+					</td>
+				</tr>
+			}
+		</table>
+		@*<div class="row">
+			<div class="form-group">
+				<div class="col-md-12">
+					<button asp-page-handler="Connect" class="btn btn-primary">Connect</button>
+				</div>
+			</div>
+		</div>*@
+	</form>
+}
